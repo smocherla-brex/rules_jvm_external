@@ -62,7 +62,6 @@ def _maven_project_jar_impl(ctx):
 
     java_info = JavaInfo(
         output_jar = bin_jar,
-        compile_jar = ijar,
         source_jar = src_jar,
 
         # TODO: calculate runtime_deps too
