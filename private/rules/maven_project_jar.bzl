@@ -44,7 +44,7 @@ def _maven_project_jar_impl(ctx):
     )
 
     java_toolchain = ctx.attr._java_toolchain[java_common.JavaToolchainInfo]
-    ijar = java_common.run_ijar(
+    stamped_jar = java_common.stamp_jar(
         actions = ctx.actions,
         jar = bin_jar,
         target_label = ctx.label,
@@ -62,6 +62,7 @@ def _maven_project_jar_impl(ctx):
 
     java_info = JavaInfo(
         output_jar = bin_jar,
+        compile_jar = stamped_jar,
         source_jar = src_jar,
 
         # TODO: calculate runtime_deps too
