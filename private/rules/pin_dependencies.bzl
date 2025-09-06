@@ -121,6 +121,7 @@ pin_dependencies = rule(
         ),
         "jvm_flags": attr.string(
             doc = "JVM flags to pass to resolver",
+            default = "-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005",
         ),
         "_resolver": attr.label(
             executable = True,

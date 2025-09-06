@@ -117,7 +117,6 @@ public class Downloader {
 
   private DownloadResult performDownload(Coordinates coordsToUse, String path) {
     Set<URI> repos = new LinkedHashSet<>();
-
     Path pathInRepo = null;
 
     // Check the local cache for the path first

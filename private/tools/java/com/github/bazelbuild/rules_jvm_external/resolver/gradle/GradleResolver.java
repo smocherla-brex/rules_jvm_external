@@ -175,14 +175,17 @@ public class GradleResolver implements Resolver {
           extension = null;
         }
         String classifier = gradleCoordinates.getClassifier();
+        String actualVersion = gradleCoordinates.getVersion();
+        if(dependency.getVersionRevision() != null) {
+          actualVersion = dependency.getVersionRevision();
+        }
         Coordinates coordinates =
             new Coordinates(
                 gradleCoordinates.getGroupId(),
                 gradleCoordinates.getArtifactId(),
                 extension,
                 classifier,
-                gradleCoordinates.getVersion(),
-                dependency.getVersionRevision());
+                actualVersion);
         addDependency(graph, coordinates, dependency, conflicts, requestedDeps, visited);
         // if there's a conflict and the conflicting version isn't one that's actually requested
         // then it's an actual conflict we want to report
@@ -270,14 +273,18 @@ public class GradleResolver implements Resolver {
           if (extension != null && extension.equals("pom")) {
             extension = null;
           }
+
+          String actualVersion = childCoordinates.getVersion();
+          if(childInfo.getVersionRevision() != null) {
+            actualVersion = childInfo.getVersionRevision();
+          }
           Coordinates child =
               new Coordinates(
                   childCoordinates.getGroupId(),
                   childCoordinates.getArtifactId(),
                   extension,
                   childCoordinates.getClassifier(),
-                  childCoordinates.getVersion(),
-                  childInfo.getVersionRevision());
+                  actualVersion);
           graph.addNode(child);
           graph.putEdge(parent, child);
           // if there's a conflict and the conflicting version isn't one that's actually requested

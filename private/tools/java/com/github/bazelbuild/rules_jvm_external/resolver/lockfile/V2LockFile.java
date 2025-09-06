@@ -93,20 +93,25 @@ public class V2LockFile {
 
       String[] parts = key.split(":", 3);
       Coordinates baseCoords =
-          parts.length == 2
-              ? new Coordinates(parts[0], parts[1], null, null, version)
-              : new Coordinates(parts[0], parts[1], parts[3], null, version);
+              parts.length == 2
+                      ? new Coordinates(parts[0], parts[1], null, null, version)
+                      : new Coordinates(parts[0], parts[1], parts[3], null, version);
 
       Map<?, ?> shasums = (Map<?, ?>) entryData.get("shasums");
       if (shasums == null) {
         shasums = Map.of();
       }
-      for (Map.Entry<?, ?> shasum : shasums.entrySet()) {
-        if (shasum.getValue() != null) {
-          Coordinates newCoords = baseCoords.setClassifier((String) shasum.getKey());
-          coords2Shasum.put(newCoords, (String) shasum.getValue());
-          key2Coords.put(newCoords.asKey(), newCoords);
-        }
+      // Don't record shasums for SNAPSHOTS
+        for (Map.Entry<?, ?> shasum : shasums.entrySet()) {
+          if (shasum.getValue() != null) {
+            Coordinates newCoords = baseCoords.setClassifier((String) shasum.getKey());
+            if(!baseCoords.isTimestampedSnapshot()) {
+              coords2Shasum.put(newCoords, (String) shasum.getValue());
+            } else {
+              coords2Shasum.put(newCoords, null);
+            }
+            key2Coords.put(newCoords.asKey(), newCoords);
+          }
       }
     }
 
@@ -216,11 +221,6 @@ public class V2LockFile {
           Map<String, Object> artifactValue =
               artifacts.computeIfAbsent(shortKey, k -> new TreeMap<>());
           artifactValue.put("version", coords.getVersion());
-          
-          // Add version_revision for reproducible builds when available
-          if (coords.getVersionRevision() != null && !coords.getVersionRevision().isEmpty()) {
-            artifactValue.put("version_revision", coords.getVersionRevision());
-          }
 
           String classifier;
           if (coords.getClassifier() == null || coords.getClassifier().isEmpty()) {
@@ -231,12 +231,9 @@ public class V2LockFile {
           @SuppressWarnings("unchecked")
           Map<String, String> shasums =
               (Map<String, String>) artifactValue.computeIfAbsent("shasums", k -> new TreeMap<>());
-          
-          // For non-versioned snapshots, their content can change any moment, so we need to avoid storing the SHA256 
-          boolean isNonVersionedSnapshot = coords.getVersion().endsWith("-SNAPSHOT") && coords.getVersionRevision() == null;
-          if (isNonVersionedSnapshot) {
-            // Classifier indicates the files associated to the dependency: store it even if the sha is not present
-            shasums.put(classifier, null);
+          // Snapshots can change, so we don't want to point a sha to it
+          if(coords.isTimestampedSnapshot()) {
+            info.getSha256().ifPresent(sha -> shasums.put(classifier, null));
           } else {
             info.getSha256().ifPresent(sha -> shasums.put(classifier, sha));
           }
